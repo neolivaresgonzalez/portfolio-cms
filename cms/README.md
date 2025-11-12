@@ -1,5 +1,7 @@
 # 🚀 Getting started with Strapi
 
+Using Content-Design v1.1 Specification
+
 Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.
 
 ### `develop`
