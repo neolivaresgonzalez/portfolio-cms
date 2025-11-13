@@ -1,0 +1,34 @@
+services:
+  strapi:
+    build: .
+    container_name: portfolio-cms
+    restart: always
+    env_file: [ .env.production ]
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - strapi_data:/app/data # SQLite DB lives here (prod.db)
+      - strapi_uploads:/app/public/uploads # Uploaded files live here
+    expose:
+      - "1337"
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    restart: always
+    depends_on:
+      - strapi
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+
+volumes:
+  strapi_data:
+  strapi_uploads:
+  caddy_data:
+  caddy_config:

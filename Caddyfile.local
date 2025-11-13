@@ -1,0 +1,15 @@
+cms.local.neolivaresgonzalez.com {
+  tls internal
+  encode zstd gzip
+  reverse_proxy strapi:1337
+
+  header {
+    X-Frame-Options "SAMEORIGIN"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  }
+
+  @health path /_health
+  respond @health 200
+}

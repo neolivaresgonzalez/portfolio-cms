@@ -1,0 +1,21 @@
+{
+  email you@neolivaresgonzalez.com
+}
+
+neolivaresgonzalez.com  {
+  encode zstd gzip
+
+  # Reverse proxy everything to Strapi
+  reverse_proxy strapi:1337
+
+  header {
+    X-Frame-Options "SAMEORIGIN"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+  }
+
+  @health path /_health
+  respond @health 200
+}

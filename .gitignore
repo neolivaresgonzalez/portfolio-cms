@@ -138,4 +138,12 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# macOS system files
 .DS_Store
+
+# Caddy local certificates
+caddy-local-root.crt
+*.crt
+*.key
+
+
