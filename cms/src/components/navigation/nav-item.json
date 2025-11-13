@@ -1,0 +1,10 @@
+{
+  "collectionName": "components_navigation_nav_items",
+  "info": {
+    "displayName": "Nav Item",
+    "icon": "bulletList"
+  },
+  "options": {},
+  "attributes": {},
+  "config": {}
+}

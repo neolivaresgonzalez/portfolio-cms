@@ -1,0 +1,10 @@
+{
+  "collectionName": "components_blocks_metrics",
+  "info": {
+    "displayName": "Metric",
+    "icon": "magic"
+  },
+  "options": {},
+  "attributes": {},
+  "config": {}
+}
