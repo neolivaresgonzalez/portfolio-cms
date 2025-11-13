@@ -1,0 +1,12 @@
+node_modules
+.git
+Dockerfile
+docker-compose*.yml
+Caddyfile
+npm-debug.log*
+.env*
+.design
+.tmp
+.cache
+dist
+build
