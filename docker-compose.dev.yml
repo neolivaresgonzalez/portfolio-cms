@@ -1,0 +1,13 @@
+services:
+  strapi:
+    build: .
+    ports: [ "1337:1337" ]
+    env_file: [ .env ]
+    volumes:
+      - ./config:/app/config
+      - ./src:/app/src
+      - ./public/uploads:/app/public/uploads
+      - strapi_data_dev:/app/data
+    command: npm run develop
+volumes:
+  strapi_data_dev:
