@@ -1,0 +1,55 @@
+name: Deploy CMS (prod)
+
+
+on:
+    push:
+        branches: [ main ]
+        paths:
+        - "Dockerfile"
+        - "docker-compose.prod.yml"
+        - "Caddyfile"
+        - "src/**"
+        - "config/**"
+        - "types/**"
+        - "package.json"
+        - "package-lock.json"
+        - ".dockerignore"
+
+    workflow_dispatch:
+
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Copy project to server
+              uses: appleboy/scp-action@v0.1.7
+              with:
+                host: ${{ secrets.PROD_SSH_HOST }}
+                username: ${{ secrets.PROD_SSH_USER }}
+                key: ${{ secrets.PROD_SSH_KEY }}
+                source: "."
+                target: "/opt/portfolio-cms"
+                overwrite: true
+            
+            - name: Deploy via Docker Compose
+              uses: appleboy/ssh-action@v0.1.10
+              with:
+                host: ${{ secrets.PROD_SSH_HOST }}
+                username: ${{ secrets.PROD_SSH_USER }}
+                key: ${{ secrets.PROD_SSH_KEY }}
+                script: |
+                    cd /opt/portfolio-cms
+
+                    # Write .env.production from scerets
+                    cat > .env.production <<EOF
+                    ${{ secrets.ENV_PRODUCTION }}
+                    EOF
+
+                    docker-compose -f docker-compose.prod.yml up -d --build
+                    docker image prune -f
+
