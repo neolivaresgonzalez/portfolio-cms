@@ -1,0 +1,5 @@
+aws_region      = "ca-central-1"
+name_prefix     = "portfolio-cms"
+public_key_path = "~/.ssh/portfolio-cms.pub"
+root_domain     = "neolivaresgonzalez.com"
+cms_subdomain   = "cms"
