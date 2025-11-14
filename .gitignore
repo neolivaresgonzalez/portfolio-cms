@@ -146,4 +146,15 @@ caddy-local-root.crt
 *.crt
 *.key
 
+# SSH keys
+~/.ssh/portfolio-cms
+*.key
+*.pem
+
+# Terraform files
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
 
