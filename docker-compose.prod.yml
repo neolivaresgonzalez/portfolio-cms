@@ -1,9 +1,10 @@
-env_file: [ .env.production ]
+
 
 services:
   strapi:
     build: .
     container_name: portfolio-cms
+    env_file: [ .env.production ]
     restart: always
     volumes:
       - strapi_data:/app/data # SQLite DB lives here (prod.db)
@@ -13,6 +14,7 @@ services:
   caddy:
     image: caddy:2
     container_name: caddy
+    env_file: [ .env.production ]
     restart: always
     depends_on:
       - strapi
