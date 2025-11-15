@@ -1,11 +1,10 @@
+env_file: [ .env.production ]
+
 services:
   strapi:
     build: .
     container_name: portfolio-cms
     restart: always
-    env_file: [ .env.production ]
-    environment:
-      - NODE_ENV=production
     volumes:
       - strapi_data:/app/data # SQLite DB lives here (prod.db)
       - strapi_uploads:/app/public/uploads # Uploaded files live here
@@ -21,7 +20,7 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      - DOMAIN=${DOMAIN}
+      DOMAIN: ${DOMAIN}
     volumes:
       - caddy_data:/data
       - caddy_config:/config
