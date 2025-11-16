@@ -22,17 +22,16 @@ jobs:
     steps:
       - name: Validate required secrets (client-side)
         run: |
-          if [ -z "${{ secrets.PROD_SSH_HOST }}" ] || [ -z "${{ secrets.PROD_SSH_USER }}" ] || [ -z "${{ secrets.PROD_SSH_KEY }}" ]; then
-            echo "One or more required SSH secrets (PROD_SSH_HOST, PROD_SSH_USER, PROD_SSH_KEY) are missing. Aborting."
-            exit 1
-          fi
-          if [ -z "${{ secrets.ENV_PRODUCTION }}" ]; then
-            echo "ENV_PRODUCTION secret is missing. Aborting."
-            exit 1
-          fi
+          required="PROD_SSH_HOST PROD_SSH_USER PROD_SSH_KEY"
+          for s in $required; do
+            if [ -z "${{ secrets[$s] }}" ]; then
+              echo "Missing secret: $s"
+              exit 1
+            fi
+          done
           echo "Required secrets present. Proceeding with deploy."
 
-      - name: Deploy via SSH
+      - name: Deploy via SSH (pull pre-built image and run)
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.PROD_SSH_HOST }}
@@ -41,49 +40,36 @@ jobs:
           script: |
             set -euo pipefail
 
-            # 1. Ensure project directory exists and is owned by the SSH user
-            if [ ! -d "/opt/portfolio-cms/.git" ]; then
-              sudo mkdir -p /opt/portfolio-cms
-              # Try to chown to the SSH user; don't fail if it doesn't succeed
-              sudo chown $USER:$USER /opt/portfolio-cms || true
-              cd /opt/portfolio-cms
-              git clone https://github.com/neolivaresgonzalez/portfolio-cms.git .
+            cd /opt/portfolio-cms || mkdir -p /opt/portfolio-cms && cd /opt/portfolio-cms
+
+            # Update local repo files (keep existing repo for non-build assets)
+            if [ -d .git ]; then
+              git fetch --all
+              git reset --hard origin/main
             else
-              cd /opt/portfolio-cms
-              git reset --hard HEAD
-              git pull --rebase
+              git clone https://github.com/neolivaresgonzalez/portfolio-cms.git .
             fi
 
-            # 2. Create .env.production from the GitHub secret (avoid heredoc indentation)
-            #    Use a single-line write to avoid leading spaces.
-            echo "Writing .env.production (contents are not printed to logs)"
+            # Ensure .env.production exists (it is written from the secret by the action previously)
             printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" > .env.production
             sync
 
-            # 3. Basic validation on remote host: ensure DOMAIN var exists in .env.production
-            if grep -qE '^DOMAIN=' .env.production; then
-              echo "DOMAIN variable present in .env.production"
-            else
-              echo "DOMAIN is missing from .env.production — deployment may fail. Aborting."
-              exit 1
+            # Authenticate to GHCR so we can pull private images (requires secrets on repo)
+            if [ -n "${{ secrets.GHCR_USERNAME }}" ] && [ -n "${{ secrets.GHCR_PAT }}" ]; then
+              echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
             fi
 
-            # 4. Choose docker compose command based on what's available on server
+            # Pull the latest image and deploy (no build)
+            docker pull ghcr.io/neolivaresgonzalez/portfolio-cms:latest || true
             if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
               DOCKER_COMPOSE_CMD="docker compose"
             elif command -v docker-compose >/dev/null 2>&1; then
               DOCKER_COMPOSE_CMD="docker-compose"
             else
-              echo "No docker compose command found (docker compose or docker-compose). Aborting."
+              echo "No docker compose command found. Aborting."
               exit 1
             fi
 
-            # 5. Build and deploy containers
-            echo "Using: $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build"
-            $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build
-
-            # 6. Cleanup dangling images
+            $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d
             docker image prune -f || true
-
-            # 7. Check the status of the containers briefly
             $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps
