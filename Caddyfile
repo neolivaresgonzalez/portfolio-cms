@@ -1,8 +1,5 @@
-{
-  email you@neolivaresgonzalez.com
-}
 
-neolivaresgonzalez.com  {
+cms.neolivaresgonzalez.com  {
   encode zstd gzip
 
   # Reverse proxy everything to Strapi
