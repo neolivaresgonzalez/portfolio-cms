@@ -25,6 +25,12 @@ variable "root_domain" {
   description = "Dominio raíz"
 }
 
+# Install script path variable
+variable "install_script_path" {
+  type        = string
+  description = "Path to the install script for the Lightsail instance"
+}
+
 # Subdomain for CMS
 variable "cms_subdomain" {
   type        = string

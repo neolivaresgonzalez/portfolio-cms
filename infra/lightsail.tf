@@ -17,35 +17,7 @@ resource "aws_lightsail_instance" "this" {
   blueprint_id      = "ubuntu_22_04"
   bundle_id         = "micro_2_0"
   key_pair_name     = aws_lightsail_key_pair.this.name
-
-  user_data = <<-CLOUDINIT
-              #!/bin/bash
-              set -euo pipefail
-              export DEBIAN_FRONTEND=noninteractive
-
-              apt-get update -y
-              apt-get install -y ca-certificates curl gnupg lsb-release
-
-              # Docker
-              install -m 0755 -d /etc/apt/keyrings
-              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-              chmod a+r /etc/apt/keyrings/docker.gpg
-
-              echo \
-                "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-                $(. /etc/os-release && echo $VERSION_CODENAME) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-              apt-get update -y
-              apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-              usermod -aG docker ubuntu
-
-              mkdir -p /opt/portfolio-cms
-              mkdir -p /opt/portfolio-cms/public/uploads
-              mkdir -p /opt/portfolio-cms/data
-
-              echo "${local.cms_fqdn}" > /etc/DOMAIN
-              CLOUDINIT
+  user_data = file(var.install_script_path)
 }
 
 # Open HTTP and HTTPS ports
