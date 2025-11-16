@@ -22,13 +22,15 @@ jobs:
     steps:
       - name: Validate required secrets (client-side)
         run: |
-          required="PROD_SSH_HOST PROD_SSH_USER PROD_SSH_KEY"
-          for s in $required; do
-            if [ -z "${{ secrets[$s] }}" ]; then
-              echo "Missing secret: $s"
-              exit 1
-            fi
-          done
+          # Comprueba explícitamente cada secreto (no se puede indexar secrets con una variable)
+          if [ -z "${{ secrets.PROD_SSH_HOST }}" ] || [ -z "${{ secrets.PROD_SSH_USER }}" ] || [ -z "${{ secrets.PROD_SSH_KEY }}" ]; then
+            echo "One or more required SSH secrets (PROD_SSH_HOST, PROD_SSH_USER, PROD_SSH_KEY) are missing. Aborting."
+            exit 1
+          fi
+          if [ -z "${{ secrets.ENV_PRODUCTION }}" ]; then
+            echo "ENV_PRODUCTION secret is missing. Aborting."
+            exit 1
+          fi
           echo "Required secrets present. Proceeding with deploy."
 
       - name: Deploy via SSH (pull pre-built image and run)
