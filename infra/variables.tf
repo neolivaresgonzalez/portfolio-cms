@@ -37,3 +37,17 @@ variable "cms_subdomain" {
   default     = "cms"
   description = "Subdominio para el CMS (cms.neolivaresgonzalez.com)"
 }
+
+# Environment variable
+variable "environment" {
+  type        = string
+  default     = "production"
+  description = "Deployment environment (e.g., production, staging)"
+}
+
+# Owner variable
+variable "owner" {
+  type        = string
+  default     = "Nicolas Eduardo Olivares Gonzalez"
+  description = "Owner of the infrastructure"
+}
