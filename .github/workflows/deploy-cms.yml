@@ -20,6 +20,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Validate required secrets (client-side)
+        run: |
+          if [ -z "${{ secrets.PROD_SSH_HOST }}" ] || [ -z "${{ secrets.PROD_SSH_USER }}" ] || [ -z "${{ secrets.PROD_SSH_KEY }}" ]; then
+            echo "One or more required SSH secrets (PROD_SSH_HOST, PROD_SSH_USER, PROD_SSH_KEY) are missing. Aborting."
+            exit 1
+          fi
+          if [ -z "${{ secrets.ENV_PRODUCTION }}" ]; then
+            echo "ENV_PRODUCTION secret is missing. Aborting."
+            exit 1
+          fi
+          echo "Required secrets present. Proceeding with deploy."
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.10
         with:
@@ -27,24 +39,51 @@ jobs:
           username: ${{ secrets.PROD_SSH_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
           script: |
-            set -e
+            set -euo pipefail
 
-            # 1. Ensure project directory exists
+            # 1. Ensure project directory exists and is owned by the SSH user
             if [ ! -d "/opt/portfolio-cms/.git" ]; then
               sudo mkdir -p /opt/portfolio-cms
-              sudo chown ubuntu:ubuntu /opt/portfolio-cms
+              # Try to chown to the SSH user; don't fail if it doesn't succeed
+              sudo chown $USER:$USER /opt/portfolio-cms || true
               cd /opt/portfolio-cms
               git clone https://github.com/neolivaresgonzalez/portfolio-cms.git .
             else
               cd /opt/portfolio-cms
-              git pull
+              git reset --hard HEAD
+              git pull --rebase
             fi
 
-            # 2. Write .env.production from GitHub secret
-            cat > .env.production << 'EOF'
-            ${{ secrets.ENV_PRODUCTION }}
-            EOF
+            # 2. Create .env.production from the GitHub secret (avoid heredoc indentation)
+            #    Use a single-line write to avoid leading spaces.
+            echo "Writing .env.production (contents are not printed to logs)"
+            printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" > .env.production
+            sync
 
-            # 3. Deploy containers
-            docker compose -f docker-compose.prod.yml up -d --build
-            docker image prune -f
+            # 3. Basic validation on remote host: ensure DOMAIN var exists in .env.production
+            if grep -qE '^DOMAIN=' .env.production; then
+              echo "DOMAIN variable present in .env.production"
+            else
+              echo "DOMAIN is missing from .env.production — deployment may fail. Aborting."
+              exit 1
+            fi
+
+            # 4. Choose docker compose command based on what's available on server
+            if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker compose"
+            elif command -v docker-compose >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker-compose"
+            else
+              echo "No docker compose command found (docker compose or docker-compose). Aborting."
+              exit 1
+            fi
+
+            # 5. Build and deploy containers
+            echo "Using: $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build"
+            $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build
+
+            # 6. Cleanup dangling images
+            docker image prune -f || true
+
+            # 7. Check the status of the containers briefly
+            $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps
