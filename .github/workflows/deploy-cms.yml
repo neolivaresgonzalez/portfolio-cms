@@ -57,6 +57,10 @@ jobs:
       - name: Validate required secrets (client-side)
         run: |
           # Comprueba explícitamente cada secreto (no se puede indexar secrets con una variable)
+          if [ -z "${{ secrets.PROD_SSH_HOST }}" ] || [ -z "${{ secrets.PROD_SSH_USER }}" ] || [ -z "${{ secrets.PROD_SSH_KEY }}" ]; then
+            echo "One or more required SSH secrets (PROD_SSH_HOST, PROD_SSH_USER, PROD_SSH_KEY) are missing. Aborting."
+            exit 1
+          fi
           if [ -z "${{ secrets.ENV_PRODUCTION }}" ]; then
             echo "ENV_PRODUCTION secret is missing. Aborting."
             exit 1
@@ -66,6 +70,9 @@ jobs:
       - name: Deploy via SSH (pull pre-built image and run)
         uses: appleboy/ssh-action@v0.1.10
         with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
           script: |
             set -euo pipefail
 
