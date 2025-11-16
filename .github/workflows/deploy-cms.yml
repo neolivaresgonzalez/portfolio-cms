@@ -56,6 +56,14 @@ jobs:
             printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" > .env.production
             sync
 
+            # Basic validation on remote host: ensure DOMAIN var exists in .env.production
+            if grep -qE '^DOMAIN=' .env.production; then
+              echo "DOMAIN variable present in .env.production"
+            else
+              echo "DOMAIN is missing from .env.production — deployment may fail. Aborting."
+              exit 1
+            fi
+
             # Authenticate to GHCR so we can pull private images (requires secrets on repo)
             if [ -n "${{ secrets.GHCR_USERNAME }}" ] && [ -n "${{ secrets.GHCR_PAT }}" ]; then
               echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
