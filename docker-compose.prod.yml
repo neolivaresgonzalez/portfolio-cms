@@ -1,8 +1,7 @@
-
-
 services:
   strapi:
-    build: .
+    # Use pre-built image from GHCR instead of building on the host
+    image: ghcr.io/neolivaresgonzalez/portfolio-cms:latest
     container_name: portfolio-cms
     env_file: [ .env.production ]
     restart: always
@@ -11,6 +10,7 @@ services:
       - strapi_uploads:/app/public/uploads # Uploaded files live here
     expose:
       - "1337"
+
   caddy:
     image: caddy:2
     container_name: caddy
