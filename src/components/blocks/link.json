@@ -5,6 +5,22 @@
     "icon": "link"
   },
   "options": {},
-  "attributes": {},
-  "config": {}
+  "attributes": {
+    "label": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "enumeration",
+      "enum": [
+        "demo",
+        "repo",
+        "case-study",
+        "other"
+      ],
+      "default": "other"
+    }
+  }
 }

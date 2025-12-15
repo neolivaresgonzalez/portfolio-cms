@@ -609,24 +609,7 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
-    caseStudyUrl: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    content: Schema.Attribute.DynamicZone<
-      [
-        'blocks.video-embed',
-        'blocks.rich-body',
-        'blocks.metric',
-        'blocks.link',
-        'blocks.image-with-caption',
-        'blocks.hero',
-        'blocks.gallery',
-        'blocks.code-sample',
-      ]
-    > &
+    coverImage: Schema.Attribute.Media<'images'> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -635,19 +618,13 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    endDate: Schema.Attribute.Date &
+    featuredSince: Schema.Attribute.Date &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
-    gallery: Schema.Attribute.Media<'videos' | 'images', true> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    heroImage: Schema.Attribute.Media<'images'> &
+    highlights: Schema.Attribute.RichText &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -666,59 +643,32 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
-    liveUrl: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::project.project'
     >;
-    metrics: Schema.Attribute.Component<'blocks.metric', true> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    priority: Schema.Attribute.Integer &
+    order: Schema.Attribute.Integer &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }> &
       Schema.Attribute.DefaultTo<0>;
-    projectStatus: Schema.Attribute.Enumeration<
-      ['planned', 'in_progress', 'completed', 'archived']
-    > &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    projectType: Schema.Attribute.Enumeration<
-      ['professional', 'personal', 'open_source', 'freelance', 'volunteer']
-    > &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }> &
-      Schema.Attribute.DefaultTo<'professional'>;
     publishedAt: Schema.Attribute.DateTime;
-    relatedProjects: Schema.Attribute.Relation<
-      'manyToMany',
-      'api::project.project'
-    >;
-    repoUrl: Schema.Attribute.String &
+    role: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
     seo: Schema.Attribute.Component<'seo.seo', false> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    shortSummary: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -731,23 +681,14 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
-    startDate: Schema.Attribute.Date &
+    Stack: Schema.Attribute.Relation<'manyToMany', 'api::tag.tag'>;
+    status: Schema.Attribute.Enumeration<['active', 'completed', 'archived']> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
-      }>;
-    Summary: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    tags: Schema.Attribute.Relation<'manyToMany', 'api::tag.tag'>;
-    technologies: Schema.Attribute.Relation<
-      'manyToMany',
-      'api::technology.technology'
-    >;
+      }> &
+      Schema.Attribute.DefaultTo<'active'>;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
@@ -758,15 +699,6 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    visibility: Schema.Attribute.Enumeration<
-      ['public', 'unlisted', 'private']
-    > &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }> &
-      Schema.Attribute.DefaultTo<'public'>;
   };
 }
 
@@ -850,7 +782,6 @@ export interface ApiTechnologyTechnology extends Struct.CollectionTypeSchema {
       'api::technology.technology'
     >;
     name: Schema.Attribute.String & Schema.Attribute.Required;
-    projects: Schema.Attribute.Relation<'manyToMany', 'api::project.project'>;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'name'> &
       Schema.Attribute.Required &

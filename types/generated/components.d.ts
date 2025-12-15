@@ -42,7 +42,14 @@ export interface BlocksLink extends Struct.ComponentSchema {
     displayName: 'Link';
     icon: 'link';
   };
-  attributes: {};
+  attributes: {
+    kind: Schema.Attribute.Enumeration<
+      ['demo', 'repo', 'case-study', 'other']
+    > &
+      Schema.Attribute.DefaultTo<'other'>;
+    label: Schema.Attribute.String;
+    url: Schema.Attribute.String;
+  };
 }
 
 export interface BlocksMetric extends Struct.ComponentSchema {
