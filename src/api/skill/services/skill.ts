@@ -4,4 +4,4 @@
 
 import { factories } from '@strapi/strapi';
 
-export default factories.createCoreService('api::technology.technology');
+export default factories.createCoreService('api::skill.skill');

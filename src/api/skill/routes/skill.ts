@@ -4,4 +4,4 @@
 
 import { factories } from '@strapi/strapi';
 
-export default factories.createCoreRouter('api::technology.technology');
+export default factories.createCoreRouter('api::skill.skill');
