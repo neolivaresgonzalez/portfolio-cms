@@ -34,7 +34,8 @@
         "service",
         "infra",
         "tool",
-        "soft-skill"
+        "soft-skill",
+        "database"
       ],
       "default": "tool"
     },

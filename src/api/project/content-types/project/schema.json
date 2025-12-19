@@ -91,20 +91,6 @@
         }
       }
     },
-    "status": {
-      "type": "enumeration",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
-      "enum": [
-        "active",
-        "completed",
-        "archived"
-      ],
-      "default": "active"
-    },
     "order": {
       "type": "integer",
       "pluginOptions": {

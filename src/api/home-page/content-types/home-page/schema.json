@@ -29,6 +29,9 @@
       "type": "component",
       "component": "seo.seo",
       "repeatable": false
+    },
+    "professionalSummary": {
+      "type": "richtext"
     }
   }
 }

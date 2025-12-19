@@ -1,0 +1,58 @@
+{
+    "kind": "collectionType",
+    "collectionName": "experiences",
+    "info": {
+        "singularName": "experience",
+        "pluralName": "experiences",
+        "displayName": "Experience"
+    },
+    "options": {
+        "draftAndPublish": true
+    },
+    "pluginOptions": {
+        "i18n": {
+            "localized": true
+        }
+    },
+    "attributes": {
+        "type": {
+            "type": "enumeration",
+            "enum": [
+                "Employment",
+                "Education"
+            ],
+            "required": true,
+            "default": "Employment"
+        },
+        "title": {
+            "type": "string",
+            "required": true
+        },
+        "subtitle": {
+            "type": "string"
+        },
+        "organization": {
+            "type": "string",
+            "required": true
+        },
+        "location": {
+            "type": "string"
+        },
+        "startDate": {
+            "type": "string"
+        },
+        "endDate": {
+            "type": "string"
+        },
+        "website": {
+            "type": "string"
+        },
+        "description": {
+            "type": "richtext"
+        },
+        "order": {
+            "type": "integer",
+            "default": 0
+        }
+    }
+}
