@@ -24,7 +24,11 @@ export interface BlocksHero extends Struct.ComponentSchema {
     displayName: 'Hero';
     icon: 'gate';
   };
-  attributes: {};
+  attributes: {
+    image: Schema.Attribute.Media<'images'>;
+    subtitle: Schema.Attribute.Text;
+    title: Schema.Attribute.String;
+  };
 }
 
 export interface BlocksImageWithCaption extends Struct.ComponentSchema {

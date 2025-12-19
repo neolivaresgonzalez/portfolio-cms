@@ -48,6 +48,12 @@
         "images",
         "files"
       ]
+    },
+    "projects": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::project.project",
+      "mappedBy": "Stack"
     }
   }
 }

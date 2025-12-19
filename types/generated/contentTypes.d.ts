@@ -541,58 +541,6 @@ export interface ApiHomePageHomePage extends Struct.SingleTypeSchema {
   };
 }
 
-export interface ApiProjectIndexPageProjectIndexPage
-  extends Struct.SingleTypeSchema {
-  collectionName: 'project_index_pages';
-  info: {
-    displayName: 'Project Index Page';
-    pluralName: 'project-index-pages';
-    singularName: 'project-index-page';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  pluginOptions: {
-    i18n: {
-      localized: true;
-    };
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    filtersEnabled: Schema.Attribute.Boolean &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }> &
-      Schema.Attribute.DefaultTo<true>;
-    intro: Schema.Attribute.Blocks &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    locale: Schema.Attribute.String;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::project-index-page.project-index-page'
-    >;
-    projects: Schema.Attribute.Relation<'oneToMany', 'api::project.project'>;
-    publishedAt: Schema.Attribute.DateTime;
-    seo: Schema.Attribute.Component<'seo.seo', false> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-  };
-}
-
 export interface ApiProjectProject extends Struct.CollectionTypeSchema {
   collectionName: 'projects';
   info: {
@@ -681,7 +629,7 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
-    Stack: Schema.Attribute.Relation<'manyToMany', 'api::tag.tag'>;
+    Stack: Schema.Attribute.Relation<'manyToMany', 'api::skill.skill'>;
     status: Schema.Attribute.Enumeration<['active', 'completed', 'archived']> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -702,66 +650,12 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiTagTag extends Struct.CollectionTypeSchema {
-  collectionName: 'tags';
+export interface ApiSkillSkill extends Struct.CollectionTypeSchema {
+  collectionName: 'skills';
   info: {
-    displayName: 'Tag';
-    pluralName: 'tags';
-    singularName: 'tag';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  pluginOptions: {
-    i18n: {
-      localized: true;
-    };
-  };
-  attributes: {
-    color: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    description: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    locale: Schema.Attribute.String;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::tag.tag'>;
-    name: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    projects: Schema.Attribute.Relation<'manyToMany', 'api::project.project'>;
-    publishedAt: Schema.Attribute.DateTime;
-    slug: Schema.Attribute.UID<'name'> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-  };
-}
-
-export interface ApiTechnologyTechnology extends Struct.CollectionTypeSchema {
-  collectionName: 'technologies';
-  info: {
-    displayName: 'Technology';
-    pluralName: 'technologies';
-    singularName: 'technology';
+    displayName: 'Skill';
+    pluralName: 'skills';
+    singularName: 'skill';
   };
   options: {
     draftAndPublish: true;
@@ -777,17 +671,23 @@ export interface ApiTechnologyTechnology extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     icon: Schema.Attribute.Media<'images' | 'files'>;
     locale: Schema.Attribute.String;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::technology.technology'
-    >;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::skill.skill'>;
     name: Schema.Attribute.String & Schema.Attribute.Required;
+    projects: Schema.Attribute.Relation<'manyToMany', 'api::project.project'>;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'name'> &
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
     type: Schema.Attribute.Enumeration<
-      ['language', 'framework', 'library', 'service', 'infra', 'tool']
+      [
+        'language',
+        'framework',
+        'library',
+        'service',
+        'infra',
+        'tool',
+        'soft-skill',
+      ]
     > &
       Schema.Attribute.DefaultTo<'tool'>;
     updatedAt: Schema.Attribute.DateTime;
@@ -1309,10 +1209,8 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::global-setting.global-setting': ApiGlobalSettingGlobalSetting;
       'api::home-page.home-page': ApiHomePageHomePage;
-      'api::project-index-page.project-index-page': ApiProjectIndexPageProjectIndexPage;
       'api::project.project': ApiProjectProject;
-      'api::tag.tag': ApiTagTag;
-      'api::technology.technology': ApiTechnologyTechnology;
+      'api::skill.skill': ApiSkillSkill;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;
