@@ -52,8 +52,9 @@ jobs:
           username: ubuntu
           key: ${{ secrets.CMS_EC2_SSH_KEY }}
           script: |
-            # Move artifact to app directory
-            mkdir -p /opt/portfolio-cms
+            # Move artifact to app directory (using sudo for permissions)
+            sudo mkdir -p /opt/portfolio-cms
+            sudo chown -R ubuntu:ubuntu /opt/portfolio-cms
             mv /home/ubuntu/deploy.tar.gz /opt/portfolio-cms/deploy.tar.gz
 
             cd /opt/portfolio-cms
