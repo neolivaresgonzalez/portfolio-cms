@@ -29,6 +29,21 @@ jobs:
             mkdir -p /opt/portfolio-cms
             cd /opt/portfolio-cms
 
+            # -------------------------------------------------------------
+            # PRE-DEPLOY: Setup 2GB Swap (Fix for t2.micro OOM)
+            # -------------------------------------------------------------
+            if ! swapon --show | grep -q "/swapfile"; then
+              echo "Creating 2GB swap file..."
+              sudo fallocate -l 2G /swapfile
+              sudo chmod 600 /swapfile
+              sudo mkswap /swapfile
+              sudo swapon /swapfile
+              echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+              echo "Swap created."
+            else
+              echo "Swap already exists."
+            fi
+            
             # Clone if doesn't exist, otherwise pull
             if [ -d ".git" ]; then
               git pull origin main
