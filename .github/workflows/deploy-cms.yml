@@ -31,8 +31,14 @@ jobs:
       - name: Prune Development Dependencies
         run: npm prune --production
 
+      - name: Prepare Config for Production
+        run: |
+          # Remove TS files from config to prevent loading errors in production
+          # But keep the folder structure as Strapi might expect it
+          find config -name "*.ts" -type f -delete
+
       - name: Compress Artifacts
-        run: tar -czf deploy.tar.gz dist node_modules package.json package-lock.json public database favicon.png
+        run: tar -czf deploy.tar.gz dist node_modules package.json package-lock.json public database config src favicon.png
 
       - name: Copy Artifacts to EC2
         uses: appleboy/scp-action@v0.1.7
@@ -68,6 +74,9 @@ jobs:
 
             # Create/Overwrite .env file with production secrets
             echo "${{ secrets.ENV_PRODUCTION }}" > .env
+            
+            # Fix DATABASE_FILENAME to use a valid writable path (override the one from secret if it's wrong)
+            sed -i 's|DATABASE_FILENAME=/app/data/data.db|DATABASE_FILENAME=.tmp/data.db|g' .env
 
             # Start/Reload PM2 (Standard Start)
             if pm2 list | grep -q "portfolio-cms"; then
