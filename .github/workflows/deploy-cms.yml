@@ -41,7 +41,9 @@ jobs:
           username: ubuntu
           key: ${{ secrets.CMS_EC2_SSH_KEY }}
           source: "deploy.tar.gz"
-          target: "/opt/portfolio-cms"
+          target: "/home/ubuntu"
+          overwrite: true
+          timeout: 120s
 
       - name: Start Application on EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -50,6 +52,10 @@ jobs:
           username: ubuntu
           key: ${{ secrets.CMS_EC2_SSH_KEY }}
           script: |
+            # Move artifact to app directory
+            mkdir -p /opt/portfolio-cms
+            mv /home/ubuntu/deploy.tar.gz /opt/portfolio-cms/deploy.tar.gz
+
             cd /opt/portfolio-cms
             
             # Clean previous artifacts to ensure fresh install
