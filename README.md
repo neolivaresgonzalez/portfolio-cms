@@ -1,63 +1,47 @@
-# 🚀 Getting started with Strapi
+# Portfolio CMS (Strapi)
 
-Using Content-Design v1.1 Specification
+This is the Strapi backend for the personal portfolio website.
 
-Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.
+## Infrastructure
+The CMS is deployed on **AWS EC2 (Free Tier)** using a `t2.micro` instance.
+- **OS**: Ubuntu 22.04 LTS
+- **Runtime**: Node.js 20
+- **Process Manager**: PM2
+- **Database**: SQLite (stored locally on EBS volume)
 
-### `develop`
+## Deployment (CI/CD)
+Deployment is automated via **GitHub Actions**.
+1.  Pushing to `main` triggers the `Deploy CMS` workflow.
+2.  The workflow connects to the EC2 instance via SSH.
+3.  It pulls the latest code, installs dependencies, builds the admin panel, and restarts the PM2 process.
 
-Start your Strapi application with autoReload enabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-develop)
+## Manual Infrastructure Provisioning
+To set up the infrastructure (or restart from scratch):
 
-```
-npm run develop
-# or
-yarn develop
-```
+1.  Navigate to `infra/`:
+    ```bash
+    cd infra
+    ```
+2.  Initialize and Apply Terraform:
+    ```bash
+    terraform init
+    terraform apply
+    ```
+3.  **Important**: Note the `cms_public_ip` output.
 
-### `start`
+## GitHub Secrets Configuration
+The following repository secrets are required for the Deployment workflow:
 
-Start your Strapi application with autoReload disabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-start)
+- `CMS_EC2_HOST`: The Public IP address of the EC2 instance (from Terraform output).
+- `CMS_EC2_SSH_KEY`: The **Private Key** matching the public key used in Terraform (`~/.ssh/portfolio-cms`).
 
-```
-npm run start
-# or
-yarn start
-```
+## Local Development
 
-### `build`
-
-Build your admin panel. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-build)
-
-```
-npm run build
-# or
-yarn build
-```
-
-## ⚙️ Deployment
-
-Strapi gives you many possible deployment options for your project including [Strapi Cloud](https://cloud.strapi.io). Browse the [deployment section of the documentation](https://docs.strapi.io/dev-docs/deployment) to find the best solution for your use case.
-
-```
-yarn strapi deploy
-```
-
-## 📚 Learn more
-
-- [Resource center](https://strapi.io/resource-center) - Strapi resource center.
-- [Strapi documentation](https://docs.strapi.io) - Official Strapi documentation.
-- [Strapi tutorials](https://strapi.io/tutorials) - List of tutorials made by the core team and the community.
-- [Strapi blog](https://strapi.io/blog) - Official Strapi blog containing articles made by the Strapi team and the community.
-- [Changelog](https://strapi.io/changelog) - Find out about the Strapi product updates, new features and general improvements.
-
-Feel free to check out the [Strapi GitHub repository](https://github.com/strapi/strapi). Your feedback and contributions are welcome!
-
-## ✨ Community
-
-- [Discord](https://discord.strapi.io) - Come chat with the Strapi community including the core team.
-- [Forum](https://forum.strapi.io/) - Place to discuss, ask questions and find answers, show your Strapi project and get feedback or just talk with other Community members.
-- [Awesome Strapi](https://github.com/strapi/awesome-strapi) - A curated list of awesome things related to Strapi.
-
----
-
-<sub>🤫 Psst! [Strapi is hiring](https://strapi.io/careers).</sub>
+1.  Install dependencies:
+    ```bash
+    npm install
+    ```
+2.  Start development server:
+    ```bash
+    npm run dev
+    ```
