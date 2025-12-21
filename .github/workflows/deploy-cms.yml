@@ -31,14 +31,8 @@ jobs:
       - name: Prune Development Dependencies
         run: npm prune --production
 
-      - name: Prepare Config for Production
-        run: |
-          # Remove TS files from config to prevent loading errors in production
-          # But keep the folder structure as Strapi might expect it
-          find config -name "*.ts" -type f -delete
-
       - name: Compress Artifacts
-        run: tar -czf deploy.tar.gz dist node_modules package.json package-lock.json public database config src favicon.png
+        run: tar -czf deploy.tar.gz dist node_modules package.json package-lock.json public database favicon.png
 
       - name: Copy Artifacts to EC2
         uses: appleboy/scp-action@v0.1.7
