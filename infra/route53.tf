@@ -9,7 +9,7 @@ resource "aws_route53_record" "cms_a" {
   name    = local.cms_fqdn
   type    = "A"
   ttl     = 300
-  records = [aws_lightsail_static_ip.this.ip_address]
+  records = [aws_instance.cms.public_ip]
 }
 
 
