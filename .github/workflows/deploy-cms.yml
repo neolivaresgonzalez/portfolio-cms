@@ -18,51 +18,45 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to EC2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Admin Panel (on GitHub Runner)
+        run: npm run build
+
+      - name: Copy Artifacts to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CMS_EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.CMS_EC2_SSH_KEY }}
+          source: "dist,package.json,package-lock.json,public,database,config,src,favicon.ico"
+          target: "/opt/portfolio-cms"
+          strip_components: 0
+
+      - name: Start Application on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.CMS_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.CMS_EC2_SSH_KEY }}
           script: |
-            # Navigate to app directory
-            mkdir -p /opt/portfolio-cms
             cd /opt/portfolio-cms
-
-            # -------------------------------------------------------------
-            # PRE-DEPLOY: Setup 2GB Swap (Fix for t2.micro OOM)
-            # -------------------------------------------------------------
-            if ! swapon --show | grep -q "/swapfile"; then
-              echo "Creating 2GB swap file..."
-              sudo fallocate -l 2G /swapfile
-              sudo chmod 600 /swapfile
-              sudo mkswap /swapfile
-              sudo swapon /swapfile
-              echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-              echo "Swap created."
-            else
-              echo "Swap already exists."
-            fi
             
-            # Clone if doesn't exist, otherwise pull
-            if [ -d ".git" ]; then
-              git pull origin main
-            else
-              git clone https://github.com/neolivaresgonzalez/portfolio-cms.git .
-              git checkout main
-            fi
+            # Install ONLY production dependencies (lighter, faster)
+            npm ci --omit=dev
 
-            # Install dependencies and build
-            npm ci
-            npm run build
-
-            # Start/Restart Strapi with PM2
-            # Using ecosystem.config.js if exists, or simple start
+            # Start/Reload PM2
             if pm2 list | grep -q "portfolio-cms"; then
               pm2 reload portfolio-cms
             else
               pm2 start npm --name "portfolio-cms" -- start
             fi
             
-            # Save PM2 list
             pm2 save
