@@ -47,10 +47,13 @@ jobs:
           script: |
             cd /opt/portfolio-cms
             
-            # Install ONLY production dependencies (lighter, faster)
+            # Create/Overwrite .env file with production secrets
+            echo "${{ secrets.ENV_PRODUCTION }}" > .env
+
+            # Install ONLY production dependencies
             npm ci --omit=dev
 
-            # Start/Reload PM2
+            # Start/Reload PM2 (Standard Start)
             if pm2 list | grep -q "portfolio-cms"; then
               pm2 reload portfolio-cms
             else
