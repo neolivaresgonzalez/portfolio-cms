@@ -126,19 +126,19 @@ jobs:
             # 6. Create .env file
             echo "${{ secrets.ENV_PRODUCTION }}" > /opt/portfolio-cms/.env
             
-            # 7. Fix DATABASE_FILENAME for Docker internal path
-            # We mount local /opt/portfolio-cms/database to /app/database
-            sed -i 's|DATABASE_FILENAME=.*|DATABASE_FILENAME=/app/database/data.db|g' /opt/portfolio-cms/.env
-
-            # 8. Run Container
+            # 7. Run Container
             # -v /opt/portfolio-cms/database:/app/database : Persist SQLite DB
-            # --env-file : Inject environment variables
+            # --env-file : Inject environment variables from .env
+            # -e HOST=0.0.0.0 : Force listening on all interfaces
+            # -e DATABASE_FILENAME=/app/database/data.db : Force correct path for Docker
             # --restart unless-stopped : Auto-restart on crash/reboot
             sudo docker run -d \
               --name portfolio-cms \
               --restart unless-stopped \
               -p 1337:1337 \
               --env-file /opt/portfolio-cms/.env \
+              -e HOST=0.0.0.0 \
+              -e DATABASE_FILENAME=/app/database/data.db \
               -v /opt/portfolio-cms/database:/app/database \
               ghcr.io/${{ github.repository }}:latest
             
