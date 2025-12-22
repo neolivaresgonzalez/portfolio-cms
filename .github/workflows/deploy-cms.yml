@@ -51,7 +51,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.CMS_EC2_SSH_KEY }}
           source: "docker-compose.yml"
-          target: "/opt/portfolio-cms/"
+          target: "/home/ubuntu/"
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -60,6 +60,10 @@ jobs:
           username: ubuntu
           key: ${{ secrets.CMS_EC2_SSH_KEY }}
           script: |
+            # Move docker-compose.yml to the correct location
+            sudo mkdir -p /opt/portfolio-cms
+            sudo mv /home/ubuntu/docker-compose.yml /opt/portfolio-cms/docker-compose.yml
+            
             # 1. Install Docker if missing
             if ! command -v docker &> /dev/null; then
               echo "Docker not found. Installing..."
