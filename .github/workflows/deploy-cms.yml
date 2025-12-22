@@ -59,6 +59,7 @@ jobs:
           host: ${{ secrets.CMS_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.CMS_EC2_SSH_KEY }}
+          command_timeout: 30m
           script: |
             # Move docker-compose.yml to the correct location and fix permissions
             sudo mkdir -p /opt/portfolio-cms
