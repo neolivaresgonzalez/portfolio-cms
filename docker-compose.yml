@@ -2,8 +2,7 @@ version: '3'
 services:
   portfolio-cms:
     container_name: portfolio-cms
-    build: .
-    image: portfolio-cms:latest
+    image: ghcr.io/${GITHUB_REPOSITORY}:latest
     restart: unless-stopped
     env_file: .env
     environment:
@@ -16,13 +15,9 @@ services:
       ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
       NODE_ENV: ${NODE_ENV}
+      HOST: '0.0.0.0'
+      PORT: 1337
     volumes:
-      - ./config:/opt/app/config
-      - ./src:/opt/app/src
-      - ./package.json:/opt/package.json
-      - ./package-lock.json:/opt/package-lock.json
-
-      - ./.env:/opt/app/.env
       - ./public/uploads:/opt/app/public/uploads
     ports:
       - '1337:1337'
@@ -33,10 +28,10 @@ services:
 
   portfolio-cmsDB:
     container_name: portfolio-cmsDB
-    platform: linux/amd64 #for platform error on Apple M1 chips
+    platform: linux/amd64
     restart: unless-stopped
     env_file: .env
-    image: mysql:latest
+    image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_USER: ${DATABASE_USERNAME}
@@ -46,9 +41,6 @@ services:
       MYSQL_ROOT_HOST: '%'
     volumes:
       - portfolio-cms-data:/var/lib/mysql
-      #- ./data:/var/lib/postgresql/data/ # if you want to use a bind folder
-    ports:
-      - '3306:3306'
     networks:
       - portfolio-cms
 
