@@ -1,35 +1,48 @@
+version: '3'
 services:
-  strapi:
-    # Use pre-built image from GHCR instead of building on the host
-    image: ghcr.io/neolivaresgonzalez/portfolio-cms:latest
+  portfolio-cms:
     container_name: portfolio-cms
-    env_file: [ .env.production ]
-    restart: always
-    volumes:
-      - strapi_data:/app/data # SQLite DB lives here (prod.db)
-      - strapi_uploads:/app/public/uploads # Uploaded files live here
-    expose:
-      - "1337"
-
-  caddy:
-    image: caddy:2
-    container_name: caddy
-    env_file: [ .env.production ]
-    restart: always
-    depends_on:
-      - strapi
-    ports:
-      - "80:80"
-      - "443:443"
+    image: ghcr.io/${GITHUB_REPOSITORY}:latest
+    restart: unless-stopped
+    env_file: .env
     environment:
-      DOMAIN: ${DOMAIN}
+      DATABASE_CLIENT: mysql
+      DATABASE_HOST: portfolio-cmsDB
+      DATABASE_PORT: 3306
+      DATABASE_NAME: strapi
+      DATABASE_USERNAME: strapi
+      # DATABASE_PASSWORD must be provided in .env
+      NODE_ENV: production
+      HOST: '0.0.0.0'
+      PORT: 1337
+    ports:
+      - '1337:1337'
+    networks:
+      - portfolio-cms
+    depends_on:
+      - portfolio-cmsDB
+
+  portfolio-cmsDB:
+    container_name: portfolio-cmsDB
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MYSQL_USER: strapi
+      MYSQL_DATABASE: strapi
+      # MYSQL_PASSWORD and MYSQL_ROOT_PASSWORD must be provided in .env (mapped from DATABASE_PASSWORD)
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
     volumes:
-      - caddy_data:/data
-      - caddy_config:/config
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - portfolio-cms-data:/var/lib/mysql
+    networks:
+      - portfolio-cms
 
 volumes:
-  strapi_data:
-  strapi_uploads:
-  caddy_data:
-  caddy_config:
+  portfolio-cms-data:
+
+
+networks:
+  portfolio-cms:
+    driver: bridge

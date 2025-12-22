@@ -1,30 +1,18 @@
-# Production Runtime for Strapi CMS
-# This Dockerfile expects 'dist', 'public', and 'package.json' to be available in the context
-# (built by GitHub Actions)
-
 FROM node:20-alpine
+# Installing libvips-dev for sharp Compatibility
+RUN apk update && apk add --no-cache build-base gcc autoconf automake zlib-dev libpng-dev nasm bash vips-dev
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
 
-WORKDIR /app
+WORKDIR /opt/
+COPY package.json package-lock.json ./
+RUN npm config set fetch-retry-maxtimeout 600000 -g && npm install --production=false
 
-# Set environment to production
-ENV NODE_ENV=production
-
-# Copy dependency manifests
-COPY package*.json ./
-
-# Install production dependencies
-# doing this *inside* the container ensures compatibility with Alpine Linux
-RUN npm ci --omit=dev
-
-# Copy the built application artifacts
-COPY dist ./dist
-COPY public ./public
-COPY config ./config
-COPY favicon.png ./
-COPY database ./database
-
-# Expose port
+WORKDIR /opt/app
+COPY . .
+ENV PATH /opt/node_modules/.bin:$PATH
+RUN chown -R node:node /opt/app
+USER node
+RUN ["npm", "run", "build"]
 EXPOSE 1337
-
-# Start Strapi
 CMD ["npm", "run", "start"]

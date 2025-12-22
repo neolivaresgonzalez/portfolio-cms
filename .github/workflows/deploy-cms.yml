@@ -13,51 +13,14 @@ permissions:
 
 jobs:
   build:
-    name: Build Host Artifacts
-    runs-on: ubuntu-22.04
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Build Admin Panel
-        run: npm run build
-
-      # We do NOT prune here because Docker will install its own production deps for Alpine
-      # We just prepare the artifacts needed for the Docker context
-
-      - name: Compress Build Context
-        # Bundling everything needed for the Docker build
-        # Exclude uploads to keep image small and avoid baking in local state
-        run: tar --exclude='public/uploads' -czf build-context.tar.gz dist public database  config favicon.png package.json package-lock.json Dockerfile
-
-      - name: Upload Build Context
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-context
-          path: build-context.tar.gz
-          retention-days: 1
-
-  docker-build:
-    name: Build & Push Docker Image
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Build Context
-        uses: actions/download-artifact@v4
-        with:
-          name: build-context
-
-      - name: Extract Context
-        run: tar -xzf build-context.tar.gz
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -75,9 +38,21 @@ jobs:
 
   deploy:
     name: Deploy to EC2
-    needs: docker-build
+    needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Copy Docker Compose to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CMS_EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.CMS_EC2_SSH_KEY }}
+          source: "docker-compose.prod.yml"
+          target: "/opt/portfolio-cms/"
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -88,64 +63,37 @@ jobs:
             # 1. Install Docker if missing
             if ! command -v docker &> /dev/null; then
               echo "Docker not found. Installing..."
-              # Add Docker's official GPG key:
               sudo apt-get update
               sudo apt-get install -y ca-certificates curl gnupg
               sudo install -m 0755 -d /etc/apt/keyrings
-              # Handle case where file might already exist or curl fails
               curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --yes
               sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-              # Add the repository to Apt sources:
               echo \
                 "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
                 $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
                 sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-              
               sudo apt-get update
               sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-              
-              # Add user to docker group (will take effect next session, but we use sudo for now)
               sudo usermod -aG docker ubuntu
             fi
 
-            # 2. Login to GHCR (using ephemeral token)
-            # using sudo to ensure we have permissions and config is saved for root (used by subsequent sudo commands)
+            # 2. Login to GHCR
             echo "${{ secrets.GITHUB_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # 3. Clean up before pulling to free space
-            echo "Pruning unused docker objects..."
+            # 3. Prepare Environment
+            cd /opt/portfolio-cms
+            # Create .env from secrets
+            echo "${{ secrets.ENV_PRODUCTION }}" > .env
+            
+            # 4. Deploy with Docker Compose
+            # Export repository name for variable substitution in compose file
+            export GITHUB_REPOSITORY=${{ github.repository }}
+            
+            # Pull latest images
+            sudo -E docker compose -f docker-compose.prod.yml pull
+            
+            # Start services
+            sudo -E docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            
+            # Cleanup
             sudo docker system prune -af
-
-            # 4. Pull the latest image
-            sudo docker pull ghcr.io/${{ github.repository }}:latest
-
-            # 4. Stop and Remove existing container
-            sudo docker stop portfolio-cms || true
-            sudo docker rm portfolio-cms || true
-
-            # 5. Prepare Server Directories
-            sudo mkdir -p /opt/portfolio-cms/database
-            sudo chown -R ubuntu:ubuntu /opt/portfolio-cms
-            
-            # 6. Create .env file
-            echo "${{ secrets.ENV_PRODUCTION }}" > /opt/portfolio-cms/.env
-            
-            # 7. Run Container
-            # -v /opt/portfolio-cms/database:/app/database : Persist SQLite DB
-            # --env-file : Inject environment variables from .env
-            # -e HOST=0.0.0.0 : Force listening on all interfaces
-            # -e DATABASE_FILENAME=/app/database/data.db : Force correct path for Docker
-            # --restart unless-stopped : Auto-restart on crash/reboot
-            sudo docker run -d \
-              --name portfolio-cms \
-              --restart unless-stopped \
-              -p 1337:1337 \
-              --env-file /opt/portfolio-cms/.env \
-              -e HOST=0.0.0.0 \
-              -e DATABASE_FILENAME=/app/database/data.db \
-              -v /opt/portfolio-cms/database:/app/database \
-              ghcr.io/${{ github.repository }}:latest
-            
-            # 9. Clean up unused images
-            sudo docker image prune -f
