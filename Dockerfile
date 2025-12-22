@@ -19,6 +19,7 @@ RUN npm ci --omit=dev
 # Copy the built application artifacts
 COPY dist ./dist
 COPY public ./public
+COPY config ./config
 COPY favicon.png ./
 COPY database ./database
 

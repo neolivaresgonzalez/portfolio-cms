@@ -37,7 +37,7 @@ jobs:
       - name: Compress Build Context
         # Bundling everything needed for the Docker build
         # Exclude uploads to keep image small and avoid baking in local state
-        run: tar --exclude='public/uploads' -czf build-context.tar.gz dist public database favicon.png package.json package-lock.json Dockerfile
+        run: tar --exclude='public/uploads' -czf build-context.tar.gz dist public database  config favicon.png package.json package-lock.json Dockerfile
 
       - name: Upload Build Context
         uses: actions/upload-artifact@v4
