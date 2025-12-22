@@ -65,7 +65,7 @@ jobs:
             sudo chown ubuntu:ubuntu /opt/portfolio-cms
             mv /home/ubuntu/docker-compose.yml /opt/portfolio-cms/docker-compose.yml
             
-            # 1. Install Docker if missing
+            # 0. Install Docker if missing
             if ! command -v docker &> /dev/null; then
               echo "Docker not found. Installing..."
               sudo apt-get update
@@ -82,8 +82,13 @@ jobs:
               sudo usermod -aG docker ubuntu
             fi
 
+            # 1.Create a temporary Docker config directory
+            export DOCKER_CONFIG="$(mktemp -d)"
+            sudo -E mkdir -p "$DOCKER_CONFIG"
+            sudo -E chown ubuntu:ubuntu "$DOCKER_CONFIG"
+            
             # 2. Login to GHCR
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "${{ secrets.GITHUB_TOKEN }}" | sudo -E docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             # 3. Prepare Environment
             cd /opt/portfolio-cms
@@ -96,15 +101,21 @@ jobs:
             
             # Kill previous containers to prevent conflicts (port 1337)
             # This handles both the old standalone container and previous compose runs
-            docker stop portfolio-cms || true
-            docker rm portfolio-cms || true
-            docker compose -f docker-compose.yml down --remove-orphans || true
+            sudo -E docker stop portfolio-cms || true
+            sudo -E docker rm portfolio-cms || true
+            sudo -E docker compose -f docker-compose.yml down --remove-orphans || true
             
             # Pull latest images
-            docker compose -f docker-compose.yml pull
+            sudo -E docker compose -f docker-compose.yml pull
             
             # Start services
-            docker compose -f docker-compose.yml up -d --remove-orphans
+            sudo -E docker compose -f docker-compose.yml up -d --remove-orphans
+            
+            # 5. Logout from GHCR
+            sudo -E docker logout ghcr.io || true
             
             # Cleanup
-            docker system prune -af
+            sudo -E docker system prune -af
+            sudo rm -rf "$DOCKER_CONFIG"
+
+            
