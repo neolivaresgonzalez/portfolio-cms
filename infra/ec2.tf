@@ -88,7 +88,7 @@ resource "aws_instance" "cms" {
   security_groups = [aws_security_group.cms_sg.name]
 
   root_block_device {
-    volume_size = 10 # 10GB is within Free Tier (up to 30GB)
+    volume_size = 20 # 20GB is within Free Tier (up to 30GB)
     volume_type = "gp3"
   }
 

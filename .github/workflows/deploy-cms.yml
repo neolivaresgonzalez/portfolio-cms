@@ -36,7 +36,8 @@ jobs:
 
       - name: Compress Build Context
         # Bundling everything needed for the Docker build
-        run: tar -czf build-context.tar.gz dist public database favicon.png package.json package-lock.json Dockerfile
+        # Exclude uploads to keep image small and avoid baking in local state
+        run: tar --exclude='public/uploads' -czf build-context.tar.gz dist public database favicon.png package.json package-lock.json Dockerfile
 
       - name: Upload Build Context
         uses: actions/upload-artifact@v4
@@ -112,7 +113,11 @@ jobs:
             # using sudo to ensure we have permissions and config is saved for root (used by subsequent sudo commands)
             echo "${{ secrets.GITHUB_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # 3. Pull the latest image
+            # 3. Clean up before pulling to free space
+            echo "Pruning unused docker objects..."
+            sudo docker system prune -af
+
+            # 4. Pull the latest image
             sudo docker pull ghcr.io/${{ github.repository }}:latest
 
             # 4. Stop and Remove existing container
