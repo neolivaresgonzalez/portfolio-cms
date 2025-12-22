@@ -3,7 +3,7 @@ cms.neolivaresgonzalez.com  {
   encode zstd gzip
 
   # Reverse proxy everything to Strapi
-  reverse_proxy strapi:1337
+  reverse_proxy portfolio-cms:1337
 
   header {
     X-Frame-Options "SAMEORIGIN"

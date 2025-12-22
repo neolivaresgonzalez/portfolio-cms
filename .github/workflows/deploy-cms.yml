@@ -50,7 +50,7 @@ jobs:
           host: ${{ secrets.CMS_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.CMS_EC2_SSH_KEY }}
-          source: "docker-compose.yml"
+          source: "docker-compose.yml,Caddyfile"
           target: "/home/ubuntu/"
 
       - name: Deploy via SSH
@@ -59,12 +59,13 @@ jobs:
           host: ${{ secrets.CMS_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.CMS_EC2_SSH_KEY }}
-          command_timeout: 30m
+          command_timeout: 20m
           script: |
             # Move docker-compose.yml to the correct location and fix permissions
             sudo mkdir -p /opt/portfolio-cms
             sudo chown ubuntu:ubuntu /opt/portfolio-cms
             mv /home/ubuntu/docker-compose.yml /opt/portfolio-cms/docker-compose.yml
+            mv /home/ubuntu/Caddyfile /opt/portfolio-cms/Caddyfile
             
             # 0. Install Docker if missing
             if ! command -v docker &> /dev/null; then

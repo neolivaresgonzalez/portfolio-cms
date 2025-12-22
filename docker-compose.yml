@@ -18,12 +18,28 @@ services:
       PORT: 1337
     volumes:
       - ./public/uploads:/opt/app/public/uploads
-    ports:
-      - '1337:1337'
+    # Ports handled by Caddy
+    expose:
+      - '1337'
     networks:
       - portfolio-cms
     depends_on:
       - portfolio-cmsDB
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - portfolio-cms
+    depends_on:
+      - portfolio-cms
 
   portfolio-cmsDB:
     container_name: portfolio-cmsDB
@@ -45,6 +61,8 @@ services:
 
 volumes:
   portfolio-cms-data:
+  caddy_data:
+  caddy_config:
 
 
 networks:
