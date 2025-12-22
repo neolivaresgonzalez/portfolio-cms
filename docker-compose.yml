@@ -1,4 +1,3 @@
-version: '3'
 services:
   portfolio-cms:
     container_name: portfolio-cms
