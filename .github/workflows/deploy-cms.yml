@@ -78,7 +78,7 @@ jobs:
             fi
 
             # 2. Login to GHCR
-            echo "${{ secrets.GITHUB_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             # 3. Prepare Environment
             cd /opt/portfolio-cms
@@ -91,15 +91,15 @@ jobs:
             
             # Kill previous containers to prevent conflicts (port 1337)
             # This handles both the old standalone container and previous compose runs
-            sudo docker stop portfolio-cms || true
-            sudo docker rm portfolio-cms || true
-            sudo -E docker compose -f docker-compose.prod.yml down --remove-orphans || true
+            docker stop portfolio-cms || true
+            docker rm portfolio-cms || true
+            docker compose -f docker-compose.prod.yml down --remove-orphans || true
             
             # Pull latest images
-            sudo -E docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml pull
             
             # Start services
-            sudo -E docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
             
             # Cleanup
-            sudo docker system prune -af
+            docker system prune -af
