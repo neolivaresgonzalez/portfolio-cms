@@ -1,40 +1,29 @@
-# Production build for Strapi CMS v4
-# -------- STAGE 1: Build Strapi --------
-FROM node:20-alpine AS builder
+# Production Runtime for Strapi CMS
+# This Dockerfile expects 'dist', 'public', and 'package.json' to be available in the context
+# (built by GitHub Actions)
 
-# Set working directory
-WORKDIR /app
-
-# Copy dependency manifests first
-COPY package*.json ./
-
-
-# Install dependencies (including devDeps for build)
-RUN npm ci
-
-# Copy the rest of the application code
-COPY . .
-
-# Build the Strapi admin panel
-RUN npm run build
-
-# -------- STAGE 2: Run Strapi --------
 FROM node:20-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Copy only necessary files from builder
-COPY --from=builder /app ./
-
-# Remove development dependencies
-RUN npm prune --omit=dev
-
-# Expose the port Strapi listens on
-EXPOSE 1337
-
-# Set environment variables
+# Set environment to production
 ENV NODE_ENV=production
+
+# Copy dependency manifests
+COPY package*.json ./
+
+# Install production dependencies
+# doing this *inside* the container ensures compatibility with Alpine Linux
+RUN npm ci --omit=dev
+
+# Copy the built application artifacts
+COPY dist ./dist
+COPY public ./public
+COPY favicon.png ./
+COPY database ./database
+
+# Expose port
+EXPOSE 1337
 
 # Start Strapi
 CMD ["npm", "run", "start"]

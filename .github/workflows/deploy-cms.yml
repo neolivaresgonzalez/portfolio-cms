@@ -1,19 +1,23 @@
-name: Deploy CMS
+name: Deploy Strapi Docker to EC2
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
+    paths-ignore:
+      - 'README.md'
+      - '.github/**'
+
+permissions:
+  packages: write
+  contents: read
 
 jobs:
-  deploy:
-    runs-on: ubuntu-22.04 # Match EC2 OS to ensure binary compatibility (better-sqlite3)
-    permissions:
-      contents: read
-
+  build:
+    name: Build Host Artifacts
+    runs-on: ubuntu-22.04
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -28,55 +32,91 @@ jobs:
       - name: Build Admin Panel
         run: npm run build
 
-      - name: Prune Development Dependencies
-        run: npm prune --production
+      # We do NOT prune here because Docker will install its own production deps for Alpine
+      # We just prepare the artifacts needed for the Docker context
 
-      - name: Compress Artifacts
-        run: tar -czf deploy.tar.gz dist node_modules package.json package-lock.json public database favicon.png
+      - name: Compress Build Context
+        # Bundling everything needed for the Docker build
+        run: tar -czf build-context.tar.gz dist public database favicon.png package.json package-lock.json Dockerfile
 
-      - name: Copy Artifacts to EC2
-        uses: appleboy/scp-action@v0.1.7
+      - name: Upload Build Context
+        uses: actions/upload-artifact@v4
         with:
-          host: ${{ secrets.CMS_EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.CMS_EC2_SSH_KEY }}
-          source: "deploy.tar.gz"
-          target: "/home/ubuntu"
-          overwrite: true
-          timeout: 120s
+          name: build-context
+          path: build-context.tar.gz
+          retention-days: 1
 
-      - name: Start Application on EC2
+  docker-build:
+    name: Build & Push Docker Image
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Build Context
+        uses: actions/download-artifact@v4
+        with:
+          name: build-context
+
+      - name: Extract Context
+        run: tar -xzf build-context.tar.gz
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}:latest
+
+  deploy:
+    name: Deploy to EC2
+    needs: docker-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.CMS_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.CMS_EC2_SSH_KEY }}
           script: |
-            # Move artifact to app directory (using sudo for permissions)
-            sudo mkdir -p /opt/portfolio-cms
+            # 1. Login to GHCR (using ephemeral token)
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # 2. Pull the latest image
+            docker pull ghcr.io/${{ github.repository }}:latest
+
+            # 3. Stop and Remove existing container
+            docker stop portfolio-cms || true
+            docker rm portfolio-cms || true
+
+            # 4. Prepare Server Directories
+            sudo mkdir -p /opt/portfolio-cms/database
             sudo chown -R ubuntu:ubuntu /opt/portfolio-cms
-            mv /home/ubuntu/deploy.tar.gz /opt/portfolio-cms/deploy.tar.gz
-
-            cd /opt/portfolio-cms
             
-            # Clean previous artifacts to ensure fresh install
-            rm -rf node_modules dist build src config database public package.json package-lock.json
-
-            # Extract Artifacts
-            tar -xzf deploy.tar.gz
-            rm deploy.tar.gz
-
-            # Create/Overwrite .env file with production secrets
-            echo "${{ secrets.ENV_PRODUCTION }}" > .env
+            # 5. Create .env file
+            echo "${{ secrets.ENV_PRODUCTION }}" > /opt/portfolio-cms/.env
             
-            # Fix DATABASE_FILENAME to use a valid writable path (override the one from secret if it's wrong)
-            sed -i 's|DATABASE_FILENAME=/app/data/data.db|DATABASE_FILENAME=.tmp/data.db|g' .env
+            # 6. Fix DATABASE_FILENAME for Docker internal path
+            # We mount local /opt/portfolio-cms/database to /app/database
+            sed -i 's|DATABASE_FILENAME=.*|DATABASE_FILENAME=/app/database/data.db|g' /opt/portfolio-cms/.env
 
-            # Start/Reload PM2 (Standard Start)
-            if pm2 list | grep -q "portfolio-cms"; then
-              pm2 reload portfolio-cms
-            else
-              pm2 start npm --name "portfolio-cms" -- start
-            fi
+            # 7. Run Container
+            # -v /opt/portfolio-cms/database:/app/database : Persist SQLite DB
+            # --env-file : Inject environment variables
+            # --restart unless-stopped : Auto-restart on crash/reboot
+            docker run -d \
+              --name portfolio-cms \
+              --restart unless-stopped \
+              -p 1337:1337 \
+              --env-file /opt/portfolio-cms/.env \
+              -v /opt/portfolio-cms/database:/app/database \
+              ghcr.io/${{ github.repository }}:latest
             
-            pm2 save
+            # 8. Clean up unused images
+            docker image prune -f
