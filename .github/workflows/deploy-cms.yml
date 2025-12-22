@@ -50,7 +50,7 @@ jobs:
           host: ${{ secrets.CMS_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.CMS_EC2_SSH_KEY }}
-          source: "docker-compose.prod.yml"
+          source: "docker-compose.yml"
           target: "/opt/portfolio-cms/"
 
       - name: Deploy via SSH
@@ -93,13 +93,13 @@ jobs:
             # This handles both the old standalone container and previous compose runs
             docker stop portfolio-cms || true
             docker rm portfolio-cms || true
-            docker compose -f docker-compose.prod.yml down --remove-orphans || true
+            docker compose -f docker-compose.yml down --remove-orphans || true
             
             # Pull latest images
-            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml pull
             
             # Start services
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.yml up -d --remove-orphans
             
             # Cleanup
             docker system prune -af
