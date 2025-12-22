@@ -89,6 +89,12 @@ jobs:
             # Export repository name for variable substitution in compose file
             export GITHUB_REPOSITORY=${{ github.repository }}
             
+            # Kill previous containers to prevent conflicts (port 1337)
+            # This handles both the old standalone container and previous compose runs
+            sudo docker stop portfolio-cms || true
+            sudo docker rm portfolio-cms || true
+            sudo -E docker compose -f docker-compose.prod.yml down --remove-orphans || true
+            
             # Pull latest images
             sudo -E docker compose -f docker-compose.prod.yml pull
             
