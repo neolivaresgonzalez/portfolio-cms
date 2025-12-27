@@ -1,0 +1,57 @@
+services:
+  portfolio-cms:
+    container_name: portfolio-cms-local-prod
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    env_file: .env.local-prod
+    environment:
+      - DATABASE_CLIENT=${DATABASE_CLIENT}
+      - DATABASE_HOST=portfolio-cmsDB
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - NODE_ENV=production
+      - UPLOAD_PROVIDER=local
+      - HOST=0.0.0.0
+      - PORT=1337
+      - PUBLIC_URL=http://localhost:1337
+      - IS_PROXY=false
+    volumes:
+      - ./public/uploads:/opt/app/public/uploads
+    ports:
+      - "1337:1337"
+    networks:
+      - portfolio-cms
+    depends_on:
+      - portfolio-cmsDB
+
+  portfolio-cmsDB:
+    container_name: portfolio-cmsDB-local
+    platform: linux/amd64
+    restart: unless-stopped
+    env_file: .env
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_USER: ${DATABASE_USERNAME}
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_DATABASE: ${DATABASE_NAME}
+      MYSQL_ROOT_HOST: '%'
+    volumes:
+      - portfolio-cms-data-local:/var/lib/mysql
+    networks:
+      - portfolio-cms
+
+volumes:
+  portfolio-cms-data-local:
+
+
+networks:
+  portfolio-cms:
+    driver: bridge

@@ -158,3 +158,26 @@ caddy-local-root.crt
 .terraform.lock.hcl
 
 
+# Content media
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.svg
+*.mp4
+*.mp3
+*.wav
+*.webm
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+*.zip
+*.rar
+*.7z
+
+
