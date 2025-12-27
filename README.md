@@ -45,3 +45,12 @@ The following repository secrets are required for the Deployment workflow:
     ```bash
     npm run dev
     ```
+
+## Local Production
+
+Local production is configured using `docker-compose.local-prod.yml`.
+
+Run the following command to start the local production environment:
+```bash
+docker compose -f docker-compose.local-prod.yml up --build
+```
