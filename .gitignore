@@ -180,4 +180,11 @@ caddy-local-root.crt
 *.rar
 *.7z
 
+# Uploads
+/public/uploads
+
+# Cache
+.cache
+
+
 
