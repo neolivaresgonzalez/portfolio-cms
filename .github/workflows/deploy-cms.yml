@@ -6,6 +6,8 @@ on:
       - main
     paths-ignore:
       - 'README.md'
+      - 'docker-compose.local-prod.yml'
+      - '.gitignore'
 
 permissions:
   packages: write
