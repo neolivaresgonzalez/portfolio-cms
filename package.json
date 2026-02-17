@@ -40,5 +40,11 @@
   "strapi": {
     "uuid": "ca395891-0f14-4749-b347-4d21e3c58ba9",
     "installId": "1985fe1227e714e75adad09cfa9caf050463d8eabde5de8029c232af555adb7e"
-  }
+  },
+  "author": {
+    "name": "Nicolas Olivares",
+    "email": "nolivares.work@gmail.com",
+    "url": "https://cms.nolivares.com"
+  },
+  "license": "UNLICENSED"
 }
