@@ -24,11 +24,11 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-# Key Pair for EC2
-resource "aws_key_pair" "cms_key" {
-  key_name   = "${var.name_prefix}-ec2-key"
-  public_key = file(var.public_key_path)
-}
+# Key Pair for EC2 - Managed manually/externally to avoid import issues
+# resource "aws_key_pair" "cms_key" {
+#   key_name   = "${var.name_prefix}-ec2-key"
+#   public_key = file(var.public_key_path)
+# }
 
 # Security Group
 resource "aws_security_group" "cms_sg" {
@@ -84,7 +84,7 @@ resource "aws_instance" "cms" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro" # Free Tier eligible
 
-  key_name      = aws_key_pair.cms_key.key_name
+  key_name        = "${var.name_prefix}-ec2-key" # Hardcoded to match existing key
   security_groups = [aws_security_group.cms_sg.name]
 
   root_block_device {

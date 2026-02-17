@@ -1,15 +1,4 @@
-# Route53 Hosted Zone for root domain
-resource "aws_route53_zone" "root" {
-  name = var.root_domain
-}
+# CMS DNS is now managed by Cloudflare.
+# The user must add an 'A' record for 'cms.nolivares.com' pointing to the instance public IP.
 
-# DNS A Record for CMS subdomain
-resource "aws_route53_record" "cms_a" {
-  zone_id = aws_route53_zone.root.zone_id
-  name    = local.cms_fqdn
-  type    = "A"
-  ttl     = 300
-  records = [aws_instance.cms.public_ip]
-}
-
-
+# Previously managed Route53 resources are removed to avoid creating a zone for nolivares.com in AWS.

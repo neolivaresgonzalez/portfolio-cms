@@ -1,8 +1,8 @@
 # AWS region variable
 variable "aws_region" {
-    description = "AWS región for Lightsail / Route53"
-    type        = string
-    default     = "ca-central-1"
+  description = "AWS región for Lightsail / Route53"
+  type        = string
+  default     = "ca-central-1"
 }
 
 # Resource name prefix
@@ -21,7 +21,7 @@ variable "public_key_path" {
 # Domain variables
 variable "root_domain" {
   type        = string
-  default     = "neolivaresgonzalez.com"
+  default     = "nolivares.com"
   description = "Dominio raíz"
 }
 
