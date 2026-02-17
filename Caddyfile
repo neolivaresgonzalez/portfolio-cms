@@ -1,5 +1,5 @@
 
-cms.neolivaresgonzalez.com  {
+cms.nolivares.com {
   encode zstd gzip
 
   # Reverse proxy everything to Strapi
